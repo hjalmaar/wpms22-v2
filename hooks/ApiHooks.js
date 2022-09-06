@@ -25,7 +25,6 @@ const useMedia = () => {
 
 const useLogin = () => {
   const postLogin = async (userCredentials) => {
-    // user credentials format: {username: 'someUsername', password: 'somePassword'}
     const options = {
       method: 'POST',
       headers: {

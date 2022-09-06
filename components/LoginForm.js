@@ -25,7 +25,6 @@ const LoginForm = () => {
       setIsLoggedIn(true);
     } catch (error) {
       console.error('Login - logIn', error);
-      // TODO: nofify user about wrong username/password/net error?
     }
   };
 
