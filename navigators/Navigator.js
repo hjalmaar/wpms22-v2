@@ -7,6 +7,7 @@ import Profile from '../views/Profile';
 import Single from '../views/Single';
 import Login from '../views/Login';
 import {MainContext} from '../contexts/MainContext';
+import {Icon} from '@rneui/themed';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -14,7 +15,9 @@ const Stack = createNativeStackNavigator();
 const TabScreen = () => {
   return (
     <Tab.Navigator>
-      <Tab.Screen name="Home" component={Home} />
+      <Tab.Screen name="Home" component={Home} options={{
+        tabBarIcon: () => <Icon name="home" />
+        }}/>
       <Tab.Screen name="Profile" component={Profile} />
     </Tab.Navigator>
   );

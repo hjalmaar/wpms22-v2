@@ -1,6 +1,8 @@
 import {View, Text, TouchableOpacity, Image, StyleSheet} from 'react-native';
 import PropTypes from 'prop-types';
 import {mediaUrl} from '../utils/variables';
+import {ListItem as NBListItem} from '@rneui/themed';
+
 
 const ListItem = ({singleMedia, navigation}) => {
   // console.log('ListItem: ', singleMedia);
