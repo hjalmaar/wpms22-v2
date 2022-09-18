@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react';
 import {doFetch} from '../utils/http';
 import {apiUrl} from '../utils/variables';
 
-const useMedia = () => {
+const useMedia = (update) => {
   const [mediaArray, setMediaArray] = useState([]);
   const loadMedia = async () => {
     try {
@@ -14,12 +14,11 @@ const useMedia = () => {
       setMediaArray(await Promise.all(allMediaData));
     } catch (error) {
       console.log('media fetch failed', error);
-      // TODO: notify user?
     }
   };
   useEffect(() => {
     loadMedia();
-  }, []);
+  }, [update]);
 
   const postMedia = async (token, data) => {
     const options = {
@@ -39,7 +38,6 @@ const useMedia = () => {
 
 const useLogin = () => {
   const postLogin = async (userCredentials) => {
-    // user credentials format: {username: 'someUsername', password: 'somePassword'}
     const options = {
       method: 'POST',
       headers: {
@@ -104,7 +102,23 @@ const useTag = () => {
     return await doFetch(apiUrl + 'tags/' + tag);
   };
 
-  return {getFilesByTag};
+  const postTag = async (token, tag) => {
+    const options = {
+      method: 'POST',
+      headers: {
+        'x-access-token': token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(tag),
+    };
+    try {
+      return await doFetch(apiUrl + 'tags', options);
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  };
+
+  return {getFilesByTag, postTag};
 };
 
 export {useLogin, useMedia, useUser, useTag};

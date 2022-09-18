@@ -1,24 +1,36 @@
 import {Input, Button, Text, Card} from '@rneui/themed';
 import {Controller, useForm} from 'react-hook-form';
 import * as ImagePicker from 'expo-image-picker';
-import {useState} from 'react';
+import {useContext, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useMedia} from '../hooks/ApiHooks';
+import {useMedia, useTag} from '../hooks/ApiHooks';
+import {Alert} from 'react-native';
+import PropTypes from 'prop-types';
+import {MainContext} from '../contexts/MainContext';
+import {applicationTag} from '../utils/variables';
 
-const Upload = () => {
-  const [image, setImage] = useState(null);
+
+const Upload = ({navigation}) => {
+  const [mediaFile, setMediaFile] = useState(null);
+  const [mediaType, setMediaType] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const {postMedia} = useMedia();
+  const {postTag} = useTag();
+  const {update, setUpdate} = useContext(MainContext)
+
+
+
 
   const {
     control,
     handleSubmit,
+    setValue,
     formState: {errors},
   } = useForm({
     defaultValues: {title: '', description: ''},
   });
 
   const pickImage = async () => {
-    // No permissions request is necessary for launching the image library
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
@@ -29,7 +41,8 @@ const Upload = () => {
     console.log('file: ', result);
 
     if (!result.cancelled) {
-      setImage(result);
+      setMediaFile(result.uri);
+      setMediaType(result.type);
     }
   };
 
@@ -37,19 +50,52 @@ const Upload = () => {
     const formData = new FormData();
     formData.append('title', data.title);
     formData.append('description', data.description);
+    const filename = mediaFile.split('/').pop();
+    let extension = filename.split('.').pop();
+    extension = extension === 'jpg' ? 'jpeg' : extension;
+    console.log(filename);
     formData.append('file', {
-      uri: image.uri,
-      name: 'testi.jpg',
-      type: 'image/jpeg',
+      uri: mediaFile,
+      name: filename,
+      type: mediaType + '/' + extension,
     });
-    const token = await AsyncStorage.getItem('userToken');
-    const uploadResponse = await postMedia(token, formData);
-    console.log('upload response', uploadResponse);
+    console.log('onSubmit formdata', formData)
+
+    try{
+      const token = await AsyncStorage.getItem('userToken');
+      const uploadResponse = await postMedia(token, formData);
+      console.log('upload response', uploadResponse);
+      const tag = {file_id: uploadResponse.file_id, tag: applicationTag};
+      const tagResponse = await postTag(token, tag);
+      console.log('onSubmit postTag', tagResponse);
+      Alert.alert(uploadResponse.message, '', [
+        {
+          text: 'Ok',
+          onPress: () => {
+            resetForm();
+            setUpdate(!update);
+            navigation.navigate('Home')
+          }
+        }
+      ]);
+    } catch (error){
+      console.error('onSubmit upload failed', error)
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const resetForm = () => {
+    setMediaFile(null);
+    setMediaType(null);
+    setValue('title', '');
+    setValue('description', '');
+  }
+
 
   return (
     <Card>
-      <Card.Image source={{uri: image?.uri || 'https://placekitten.com/300'}} />
+      <Card.Image source={{uri: mediaFile || 'https://placekitten.com/300'}} />
       <Controller
         control={control}
         rules={{
@@ -87,10 +133,18 @@ const Upload = () => {
       />
 
       <Button title="Select media" onPress={pickImage} />
-
-      <Button title="Upload media" onPress={handleSubmit(onSubmit)} />
+      <Button title="Reset" onPress={resetForm} />
+      <Button
+        title="Upload media"
+        disabled={!mediaFile}
+        loading = {isLoading}
+        onPress={handleSubmit(onSubmit)} />
     </Card>
   );
+};
+
+Upload.propTypes = {
+  navigation: PropTypes.object,
 };
 
 export default Upload;
